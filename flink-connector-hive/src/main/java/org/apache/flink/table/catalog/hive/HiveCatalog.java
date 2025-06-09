@@ -38,7 +38,6 @@ import org.apache.flink.table.catalog.CatalogPropertiesUtil;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.CatalogView;
 import org.apache.flink.table.catalog.FunctionLanguage;
-import org.apache.flink.table.catalog.ManagedTableListener;
 import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
@@ -480,10 +479,9 @@ public class HiveCatalog extends AbstractCatalog {
             throw new DatabaseNotExistException(getName(), tablePath.getDatabaseName());
         }
 
-        boolean managedTable = ManagedTableListener.isManagedTable(this, resolvedTable);
         Table hiveTable =
                 HiveTableUtil.instantiateHiveTable(
-                        tablePath, resolvedTable, hiveConf, managedTable);
+                        tablePath, resolvedTable, hiveConf, false);
 
         UniqueConstraint pkConstraint = null;
         ResolvedSchema resolvedSchema = resolvedTable.getResolvedSchema();
@@ -637,7 +635,7 @@ public class HiveCatalog extends AbstractCatalog {
                             (ResolvedCatalogBaseTable) newCatalogTable,
                             hiveTable,
                             hiveConf,
-                            ManagedTableListener.isManagedTable(this, newCatalogTable));
+                            false);
         }
         if (isHiveTable) {
             hiveTable.getParameters().remove(CONNECTOR.key());
@@ -796,7 +794,12 @@ public class HiveCatalog extends AbstractCatalog {
                     hiveTable.getViewExpandedText(),
                     properties);
         } else {
-            return CatalogTable.of(schema, comment, partitionKeys, properties);
+            return CatalogTable.newBuilder()
+                    .schema(schema)
+                    .comment(comment)
+                    .partitionKeys(partitionKeys)
+                    .options(properties)
+                    .build();
         }
     }
 
