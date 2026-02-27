@@ -53,8 +53,6 @@ import org.antlr.runtime.tree.Tree;
 import org.antlr.runtime.tree.TreeVisitor;
 import org.antlr.runtime.tree.TreeVisitorAction;
 import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
@@ -1653,10 +1651,8 @@ public class HiveParserUtils {
                 convertedAggFunction,
                 aggInfo.isDistinct(),
                 false,
-                false,
                 argIndices,
                 -1,
-                RelCollations.EMPTY,
                 groupCount,
                 input,
                 type,
@@ -1680,10 +1676,8 @@ public class HiveParserUtils {
             SqlAggFunction aggFunction,
             boolean distinct,
             boolean approximate,
-            boolean ignoreNulls,
             List<Integer> argList,
             int filterArg,
-            RelCollation collation,
             int groupCount,
             RelNode input,
             RelDataType type,
@@ -1698,16 +1692,7 @@ public class HiveParserUtils {
             type = aggFunction.inferReturnType(callBinding);
         }
         return AggregateCall.create(
-                aggFunction,
-                distinct,
-                approximate,
-                ignoreNulls,
-                argList,
-                filterArg,
-                null,
-                collation,
-                type,
-                name);
+                aggFunction, distinct, approximate, argList, filterArg, groupCount, input, type, name);
     }
 
     public static boolean isFromTimeStampToDecimal(RelDataType srcType, RelDataType targetType) {

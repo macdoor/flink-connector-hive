@@ -63,6 +63,7 @@ import org.apache.flink.table.catalog.hive.factories.HiveCatalogFactoryOptions;
 import org.apache.flink.table.catalog.hive.factories.HiveFunctionDefinitionFactory;
 import org.apache.flink.table.catalog.hive.util.AlterHiveDatabaseOp;
 import org.apache.flink.table.catalog.hive.util.AlterTableOp;
+import org.apache.flink.table.catalog.hive.util.Constants;
 import org.apache.flink.table.catalog.hive.util.HiveDDLUtils;
 import org.apache.flink.table.catalog.hive.util.HiveReflectionUtils;
 import org.apache.flink.table.catalog.hive.util.HiveStatsUtil;
@@ -73,7 +74,6 @@ import org.apache.flink.table.catalog.stats.CatalogTableStatistics;
 import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.factories.Factory;
 import org.apache.flink.table.factories.FunctionDefinitionFactory;
-import org.apache.flink.table.factories.ManagedTableFactory;
 import org.apache.flink.table.legacy.api.constraints.UniqueConstraint;
 import org.apache.flink.table.legacy.factories.TableFactory;
 import org.apache.flink.table.resource.ResourceUri;
@@ -320,17 +320,14 @@ public class HiveCatalog extends AbstractCatalog {
         }
     }
 
-    @Override
     public Optional<Factory> getFactory() {
         return Optional.of(new HiveDynamicTableFactory(hiveConf));
     }
 
-    @Override
     public Optional<TableFactory> getTableFactory() {
         return Optional.of(new HiveTableFactory());
     }
 
-    @Override
     public Optional<FunctionDefinitionFactory> getFunctionDefinitionFactory() {
         return Optional.of(new HiveFunctionDefinitionFactory(hiveShim));
     }
@@ -765,7 +762,7 @@ public class HiveCatalog extends AbstractCatalog {
         } else {
             properties = retrieveFlinkProperties(properties);
 
-            if (ManagedTableFactory.DEFAULT_IDENTIFIER.equalsIgnoreCase(
+            if (Constants.MANAGED_TABLE_CONNECTOR_ID.equalsIgnoreCase(
                     properties.get(CONNECTOR.key()))) {
                 // for Flink's managed table, we remove the connector option
                 properties.remove(CONNECTOR.key());
@@ -1818,7 +1815,6 @@ public class HiveCatalog extends AbstractCatalog {
         return result;
     }
 
-    @Override
     public boolean supportsManagedTable() {
         return true;
     }

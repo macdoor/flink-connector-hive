@@ -660,14 +660,15 @@ public class HiveParserSemanticAnalyzer {
 
             // Step 2, create a temp table to maintain table schema
             ResolvedSchema resolvedSchema = ResolvedSchema.physical(fieldsName, fieldsDataType);
+            CatalogTable tempCatalogTable =
+                    CatalogTable.newBuilder()
+                            .schema(Schema.newBuilder().fromResolvedSchema(resolvedSchema).build())
+                            .comment("values temp table")
+                            .partitionKeys(new ArrayList<>())
+                            .options(Collections.emptyMap())
+                            .build();
             ResolvedCatalogTable tempTable =
-                    new ResolvedCatalogTable(
-                            CatalogTable.of(
-                                    Schema.newBuilder().fromResolvedSchema(resolvedSchema).build(),
-                                    "values temp table",
-                                    new ArrayList<>(),
-                                    Collections.emptyMap()),
-                            resolvedSchema);
+                    new ResolvedCatalogTable(tempCatalogTable, resolvedSchema);
             // remember the data for this table
             qb.getValuesTableToData().put(tableName, Tuple2.of(tempTable, valuesData));
         } catch (Exception e) {

@@ -1063,14 +1063,14 @@ public class HiveParserDDLSemanticAnalyzer {
                 ResolvedSchema schema =
                         HiveTableUtil.createResolvedSchema(
                                 cols, partCols, Collections.emptySet(), null);
-                ResolvedCatalogTable destTable =
-                        new ResolvedCatalogTable(
-                                CatalogTable.of(
-                                        Schema.newBuilder().fromResolvedSchema(schema).build(),
-                                        comment,
-                                        HiveCatalog.getFieldNames(partCols),
-                                        tblProps),
-                                schema);
+                CatalogTable catalogTable =
+                        CatalogTable.newBuilder()
+                                .schema(Schema.newBuilder().fromResolvedSchema(schema).build())
+                                .comment(comment)
+                                .partitionKeys(HiveCatalog.getFieldNames(partCols))
+                                .options(tblProps)
+                                .build();
+                ResolvedCatalogTable destTable = new ResolvedCatalogTable(catalogTable, schema);
 
                 Tuple4<ObjectIdentifier, QueryOperation, Map<String, String>, Boolean>
                         insertOperationInfo =
@@ -1193,11 +1193,18 @@ public class HiveParserDDLSemanticAnalyzer {
             notNullColSet.addAll(uniqueConstraint.getColumns());
         }
         Schema schema = HiveTableUtil.createSchema(cols, partCols, notNullColSet, uniqueConstraint);
-        return new CreateTableOperation(
-                identifier,
-                CatalogTable.of(schema, comment, HiveCatalog.getFieldNames(partCols), props),
-                ifNotExists,
-                isTemporary);
+        ResolvedSchema resolvedSchema =
+                HiveTableUtil.createResolvedSchema(cols, partCols, notNullColSet, uniqueConstraint);
+        CatalogTable catalogTable =
+                CatalogTable.newBuilder()
+                        .schema(schema)
+                        .comment(comment)
+                        .partitionKeys(HiveCatalog.getFieldNames(partCols))
+                        .options(props)
+                        .build();
+        ResolvedCatalogTable resolvedCatalogTable =
+                new ResolvedCatalogTable(catalogTable, resolvedSchema);
+        return new CreateTableOperation(identifier, resolvedCatalogTable, ifNotExists, isTemporary);
     }
 
     private void markHiveConnector(Map<String, String> props) {
@@ -1980,17 +1987,15 @@ public class HiveParserDDLSemanticAnalyzer {
                                         ? null
                                         : TableChange.ColumnPosition.after(flagCol)));
 
+        CatalogTable catalogTable =
+                CatalogTable.newBuilder()
+                        .schema(Schema.newBuilder().fromResolvedSchema(newSchema).build())
+                        .comment(oldTable.getComment())
+                        .partitionKeys(oldTable.getPartitionKeys())
+                        .options(props)
+                        .build();
         return new AlterTableChangeOperation(
-                tableIdentifier,
-                tableChanges,
-                new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                Schema.newBuilder().fromResolvedSchema(newSchema).build(),
-                                oldTable.getComment(),
-                                oldTable.getPartitionKeys(),
-                                props),
-                        newSchema),
-                false);
+                tableIdentifier, tableChanges, new ResolvedCatalogTable(catalogTable, newSchema), false);
     }
 
     private Operation convertAlterTableModifyCols(
@@ -2052,16 +2057,15 @@ public class HiveParserDDLSemanticAnalyzer {
         } else {
             newSchema = ResolvedSchema.of(newColumns);
         }
+        CatalogTable catalogTable =
+                CatalogTable.newBuilder()
+                        .schema(Schema.newBuilder().fromResolvedSchema(newSchema).build())
+                        .comment(oldTable.getComment())
+                        .partitionKeys(oldTable.getPartitionKeys())
+                        .options(props)
+                        .build();
         return new AlterTableSchemaOperation(
-                tableIdentifier,
-                new ResolvedCatalogTable(
-                        CatalogTable.of(
-                                Schema.newBuilder().fromResolvedSchema(newSchema).build(),
-                                oldTable.getComment(),
-                                oldTable.getPartitionKeys(),
-                                props),
-                        newSchema),
-                false);
+                tableIdentifier, new ResolvedCatalogTable(catalogTable, newSchema), false);
     }
 
     private Operation convertAlterTableDropParts(String[] qualified, HiveParserASTNode ast) {

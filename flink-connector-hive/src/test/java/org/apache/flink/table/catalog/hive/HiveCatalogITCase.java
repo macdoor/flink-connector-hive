@@ -38,8 +38,8 @@ import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TestSchemaResolver;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
+import org.apache.flink.table.catalog.hive.util.Constants;
 import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.ManagedTableFactory;
 import org.apache.flink.table.factories.TestManagedTableFactory;
 import org.apache.flink.table.planner.factories.utils.TestCollectionTableFactory;
 import org.apache.flink.table.utils.CatalogManagerMocks;
@@ -595,7 +595,7 @@ public class HiveCatalogITCase {
             expectedOptions.forEach((k, v) -> expectedParameters.put(FLINK_PROPERTY_PREFIX + k, v));
             expectedParameters.put(
                     FLINK_PROPERTY_PREFIX + CONNECTOR.key(),
-                    ManagedTableFactory.DEFAULT_IDENTIFIER);
+                    Constants.MANAGED_TABLE_CONNECTOR_ID);
 
             assertThat(hiveCatalog.getHiveTable(tableIdentifier.toObjectPath()).getParameters())
                     .containsAllEntriesOf(expectedParameters);

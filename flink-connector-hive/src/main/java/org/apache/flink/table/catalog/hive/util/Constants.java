@@ -26,6 +26,12 @@ public class Constants {
     // -----------------------------------------------------------------------------------
     public static final String IDENTIFIER = "hive";
 
+    /**
+     * Connector identifier for Flink managed tables (catalog-owned). Used when
+     * ManagedTableFactory is not available (e.g. Flink 2.2+).
+     */
+    public static final String MANAGED_TABLE_CONNECTOR_ID = "table-managed";
+
     // -----------------------------------------------------------------------------------
     //  Constants for ALTER TABLE
     // -----------------------------------------------------------------------------------

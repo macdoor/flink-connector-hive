@@ -22,11 +22,10 @@ import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.streaming.api.functions.sink.legacy.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.legacy.SinkFunction;
-import org.apache.flink.table.catalog.CatalogLock;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.hive.HiveCatalogLock;
+import org.apache.flink.table.catalog.hive.HiveCatalogLockInterface;
 import org.apache.flink.table.connector.ChangelogMode;
-import org.apache.flink.table.connector.RequireCatalogLock;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.sink.legacy.SinkFunctionProvider;
 import org.apache.flink.table.data.RowData;
@@ -62,11 +61,11 @@ public class TestLockTableSinkFactory implements DynamicTableSinkFactory {
         return new TestLockTableSink(context.getObjectIdentifier());
     }
 
-    private static class TestLockTableSink implements DynamicTableSink, RequireCatalogLock {
+    private static class TestLockTableSink implements DynamicTableSink {
 
         private final ObjectIdentifier tableIdentifier;
 
-        private CatalogLock.Factory lockFactory;
+        private HiveCatalogLockInterface.Factory lockFactory;
 
         private TestLockTableSink(ObjectIdentifier tableIdentifier) {
             this.tableIdentifier = tableIdentifier;
@@ -106,8 +105,7 @@ public class TestLockTableSinkFactory implements DynamicTableSinkFactory {
             return "test-lock";
         }
 
-        @Override
-        public void setLockFactory(CatalogLock.Factory lockFactory) {
+        public void setLockFactory(HiveCatalogLockInterface.Factory lockFactory) {
             this.lockFactory = lockFactory;
         }
     }
@@ -117,22 +115,25 @@ public class TestLockTableSinkFactory implements DynamicTableSinkFactory {
         private static final AtomicReference<TestLockSink> REFERENCE = new AtomicReference<>();
 
         private final ObjectIdentifier tableIdentifier;
-        private final CatalogLock.Factory lockFactory;
+        private final HiveCatalogLockInterface.Factory lockFactory;
 
-        private transient CatalogLock lock;
+        private transient HiveCatalogLockInterface lock;
 
-        private TestLockSink(ObjectIdentifier tableIdentifier, CatalogLock.Factory lockFactory) {
+        private TestLockSink(ObjectIdentifier tableIdentifier, HiveCatalogLockInterface.Factory lockFactory) {
             this.tableIdentifier = tableIdentifier;
             this.lockFactory = lockFactory;
         }
 
         @Override
         public void open(OpenContext openContext) throws Exception {
-            this.lock = lockFactory.create();
+            this.lock = lockFactory != null ? lockFactory.create() : null;
         }
 
         @Override
         public void invoke(RowData value, Context context) throws Exception {
+            if (lock == null) {
+                return; // Flink 2.2+ may not inject lock factory
+            }
             lock.runWithLock(
                     tableIdentifier.getDatabaseName(),
                     tableIdentifier.getObjectName(),

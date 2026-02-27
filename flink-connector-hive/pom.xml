@@ -1387,6 +1387,13 @@ under the License.
 										<exclude>META-INF/services/org.apache.flink.table.legacy.factories.TableFactory</exclude>
 									</excludes>
 								</filter>
+								<filter>
+									<artifact>org.apache.parquet:parquet-jackson</artifact>
+									<excludes>
+										<!-- Exclude Java 17 multi-release classes that old ASM in shade plugin cannot parse -->
+										<exclude>META-INF/versions/*/**</exclude>
+									</excludes>
+								</filter>
 							</filters>
 						</configuration>
 					</execution>

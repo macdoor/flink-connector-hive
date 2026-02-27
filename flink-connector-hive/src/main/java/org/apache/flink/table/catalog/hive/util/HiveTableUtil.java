@@ -36,12 +36,12 @@ import org.apache.flink.table.catalog.hive.HiveCatalogConfig;
 import org.apache.flink.table.catalog.hive.client.HiveMetastoreClientWrapper;
 import org.apache.flink.table.catalog.hive.client.HiveShim;
 import org.apache.flink.table.expressions.CallExpression;
+import org.apache.flink.table.expressions.DefaultSqlFactory;
 import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.expressions.ExpressionVisitor;
 import org.apache.flink.table.expressions.FieldReferenceExpression;
 import org.apache.flink.table.expressions.TypeLiteralExpression;
 import org.apache.flink.table.expressions.ValueLiteralExpression;
-import org.apache.flink.table.factories.ManagedTableFactory;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.hive.conversion.HiveInspectors;
@@ -488,7 +488,7 @@ public class HiveTableUtil {
 
         Map<String, String> properties = new HashMap<>(table.getOptions());
         if (managedTable) {
-            properties.put(CONNECTOR.key(), ManagedTableFactory.DEFAULT_IDENTIFIER);
+            properties.put(CONNECTOR.key(), Constants.MANAGED_TABLE_CONNECTOR_ID);
         }
         // Table comment
         if (table.getComment() != null) {
@@ -534,10 +534,12 @@ public class HiveTableUtil {
         } else {
             if (isView) {
                 properties.putAll(
-                        CatalogPropertiesUtil.serializeCatalogView((ResolvedCatalogView) table));
+                        CatalogPropertiesUtil.serializeCatalogView(
+                                (ResolvedCatalogView) table, DefaultSqlFactory.INSTANCE));
             } else {
                 properties.putAll(
-                        CatalogPropertiesUtil.serializeCatalogTable((ResolvedCatalogTable) table));
+                        CatalogPropertiesUtil.serializeCatalogTable(
+                                (ResolvedCatalogTable) table, DefaultSqlFactory.INSTANCE));
             }
 
             properties = maskFlinkProperties(properties);

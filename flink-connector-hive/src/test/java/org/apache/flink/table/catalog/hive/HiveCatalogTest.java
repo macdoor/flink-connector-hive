@@ -31,9 +31,9 @@ import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.hive.util.Constants;
 import org.apache.flink.table.catalog.hive.util.HiveTableUtil;
 import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.ManagedTableFactory;
 import org.apache.flink.table.resource.ResourceType;
 import org.apache.flink.table.resource.ResourceUri;
 
@@ -103,7 +103,7 @@ public class HiveCatalogTest {
         assertThat(hiveTable.getParameters())
                 .containsEntry(
                         FLINK_PROPERTY_PREFIX + CONNECTOR.key(),
-                        ManagedTableFactory.DEFAULT_IDENTIFIER);
+                        Constants.MANAGED_TABLE_CONNECTOR_ID);
         CatalogBaseTable retrievedTable = hiveCatalog.instantiateCatalogTable(hiveTable);
         assertThat(retrievedTable.getOptions()).isEmpty();
     }
